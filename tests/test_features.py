@@ -1,4 +1,4 @@
-from aim5005.features import MinMaxScaler, StandardScaler
+from aim5005.features import MinMaxScaler, StandardScaler, LabelEncoder
 import numpy as np
 import unittest
 from unittest.case import TestCase
@@ -50,7 +50,7 @@ class TestFeatures(TestCase):
         scaler = StandardScaler()
         data = [[0, 0], [0, 0], [1, 1], [1, 1]]
         expected = np.array([[-1., -1.], [-1., -1.], [1., 1.], [1., 1.]])
-        scaler.fit(data)
+        result = scaler.fit_transform(data)
         assert (result == expected).all(), "Scaler transform does not return expected values. Expect {}. Got: {}".format(expected.reshape(1,-1), result.reshape(1,-1))
         
     def test_standard_scaler_single_value(self):
@@ -62,6 +62,48 @@ class TestFeatures(TestCase):
         assert (result == expected).all(), "Scaler transform does not return expected values. Expect {}. Got: {}".format(expected.reshape(1,-1), result.reshape(1,-1))
 
     # TODO: Add a test of your own below this line
+
+    def test_standard_scaler_constant_feature(self):
+        X = np.array([[5, 5], [5, 5], [5, 5]])
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+
+        assert np.allclose(X_scaled, 0), "Constant feature should be scaled to 0"
+
+    def test_standard_scaler_transform_before_fit(self):
+        X = np.array([[1, 2], [3, 4], [5, 6]])
+        scaler = StandardScaler()
+        
+        try:
+            scaler.transform(X)
+        except ValueError as e:
+            assert str(e) == "StandardScaler has not been fitted", "Raises ValueError if transform is called before fit"
+        else:
+            raise AssertionError("Expected ValueError was not raised")
     
-if __name__ == '__main__':
+    def test_label_encoder(self):
+        labels = ['apple', 'banana', 'orange', 'banana', 'apple']
+        le = LabelEncoder()
+        
+        le.fit(labels)
+        
+        assert np.array_equal(le.classes_, np.array(['apple', 'banana', 'orange'])), "Classes mismatch"
+
+        encoded_labels = le.transform(labels)
+        
+        expected_labels = [0, 1, 2, 1, 0]
+        
+        assert np.array_equal(encoded_labels, expected_labels), "Label encoding mismatch"
+
+    def test_fit_transform(self):
+        labels = ['cat', 'dog', 'cat', 'mouse']
+        le = LabelEncoder()
+        
+        encoded_labels = le.fit_transform(labels)
+        
+        expected_labels = [0, 1, 0, 2]
+        
+        assert np.array_equal(encoded_labels, expected_labels), "Fit transform mismatch"
+    
+if _name_ == '_main_':
     unittest.main()
